@@ -1,0 +1,558 @@
+Microservices
+
+MONOLITH 
+-> it is similar to a big container wherein all the software components of an application are assembled together and tightly packed
+
+-> all the components will be in a single unit, in one application  will implement all the functionalities 
+
+-> if any feature is not working the complete system goes down, in order to handle this issue, the application needs to re-built, re-tested and also re-deployed
+
+-> it is tightly coupled, changes in one module can affect the other
+
+-> one function or program depends on other
+
+-> Deployed in single bundle
+
+-> Change in one service then whole app is redeployed
+
+
+
+SERVICE ORIENTED -> it is essentialy a collection of services. These services communicate with each other. the communication can involve either simple data passing or two or more services coordination some activity
+
+MICROSERVICES 
+-> it is an architectural style that stuructures an application as a collection of small autonomous service modeled around a business domain.
+ 
+--> Each micro service is deployed indepentently, have diff port numbers
+
+--> each module is managed independently
+
+--> different teck stack
+
+--> have independent data base for each micro service, one service can use MySQL other can use postgre sql
+
+--> it is fine grained , each service will focus only on single business logic
+
+-->  Fault isolation is easy, even if one service goes down, other can continue to function
+
+--> All microservices should be loosely coupled so that changes made in one does not affect the other, every service should have their respective database
+
+
+--> no cross dependencies b/w code bases. you can use difference technologies for diff services
+
+
+
+MICROSERVICES CHALLENGES
+
+--> Microservice relay on each other and they will have to communicate with each other
+
+--> monitoring the applications - actuators and we should maintain services maintained on different ports
+
+--> Handling microservices is complex
+
+__________________________________
+
+microservices communication -> each service should know each other
+
+SPRING CLOUD
+--> Service Registry - Eureka Server (this also we should create as an application we will be adding dependencies and add annotations) this is the place were the services should register
+
+---> user service will send the request to the eureka server to get the products then the eureka server will sent the port no where the product service is running
+
+
+SPRING CLOUD
+
+--> it is a frame work built on the top of spring boot that helps developers build microservices based distributed system easily
+
+1. SERVICE DISCOVERY
+
+- allows services to find each other automatically
+- uses Netflix Eureka
+
+2. Centralized Configuration
+
+- stores configuration in one central place
+- uses Spring Cloud Config
+- updates configs without restarting service
+- maintains environment specific configs
+
+3. Load Balancer
+
+- Distributes traffic across multiple service instances
+- uses Spring Cloud LoadBalancer
+- improves performance
+
+4. Fault Tolerance
+
+- Handles service failures gracefully
+- uses Resilience4j
+- Circuit breaker, retry, timeout
+
+5. API Gateway
+
+- it acts as a single entry point , every request first goes to the api gateway, api gateway will route to the respective service
+- uses Spring Cloud Gateway
+- routing, authenticating, looging
+
+6. Distributed Tracing
+
+-Tracks requests across multiple services
+- uses Spring Cloud Sleuth
+- often integrated with Zipkin
+
+7. Messaging Support
+
+- Enables communication with services
+- uses Spring Cloud Stream
+- supports Kafka, RabbitMQ
+
+8. Security Support
+
+- Provides secure microservice communication
+- Uses OAuth2, JWT, Spring Security
+
+
+
+___________________________________
+
+Eureka Server 
+
+-also we should add the spring cloud dependency and Netflix eureka server dependency
+
+- default port is 8761
+- application properties we should add
+    -> eureka.client.register-with-eureka=false
+    -> eureka.client.fetch-registry= false
+
+-we should create a spring boot project and we should add @EnablEurekaServer annotation
+
+- for individual microservices we should add spring cloud stater Netflix eureka client and spring cloud dependencies for each microservice
+
+- in older microservice versions we should add @EnableDiscoveryClient but now its not mandatory
+
+- in application properties we should add eureka.client.register-with-eureka = true
+and 
+eureka.client.fetch-registry=true
+
+eureka.client.service-url.defaultZone= http://localhost:8761/eureka/
+
+____________________________________
+
+REST TEMPLATE
+
+- we should create a bean for rest template 
+
+- we can call all the http methods on one service can be done with rest template
+
+-getforobject, patchforobject, postforentity, and so on.
+
+- rest template will take the url of other service and it will return an array of objects and we can convert it to list
+
+-@LoadBalanced -> enables client side load balancing then the microservices can be identified by their name instead of hard codes url, if multiple instances are running to which instance the request has to be forwarded is done by load balancer
+
+hard coded url - http://localhost:8080/products/getProducts
+
+using load balancer we can use service name
+http://productservice/products/getproduct
+
+load balancer uses round robin algorithm
+____________________________________
+
+SERVICE DISCOVERY
+used to register the microservices
+API gateway acts as and entry point
+
+->Client side discovery -> we will not use API gateway 
+
+-> Server side discovery -> we will use API gateway
+
+# ways to communicate with each other
+-> rest template - deprecated - synchronous
+
+-> feign client - declarative style - reduces boiler plate code - synchronous - use interface - by default it is synchronous - can also be made asynchronous
+
+-> web client -  Spring reactive - asynchronous
+
+
+____________________________________
+
+FEIGN CLIENT
+
+we should add @EnableFeignClient
+- Triggers feign client registers
+
+- scans the classpath for @FeighClient -> in user service i need to get the products from product service -> for which i should create an interface for products productFeignClient where the interface should be declared with the annotation @FeighClient(name = "PRODUCTSERVICE")
+in that interface we should declare a method which we want to access i.e we should declare only the methods which needs to be accessed form the other service
+
+- registers each feign client as bean
+
+- internally for every @FeignClient Spring will create a factory bean FeignClientFactoryBean
+
+then after creating the feignclient interface we can add the dependency for interface then we can use the dependency to call the getAllProducts().getBody();
+
+_____________________________________
+
+API GATEWAY
+
+--> for internal communications we dont need api gateway
+
+--> in microservices we should use the  api gateway which acts as an entry point , req may be coming from different clients , so every request should not go directly to microservices which increases network call so we should use api gateway which routes the request to the respective service, we will configure the routing 
+
+--> for api gate we need to create a separate spring boot project and this api gate way should also be registered in eureka server 
+
+in the later versions spring cloud stater gateway may be removed so we can use web flux dependency
+
+--> add the dependencies for Netflix eureka client, api gate way and load balancer 
+
+ --> in application.properties file
+ 
+- api gate way should also register in eureka 
+
+- if we have user service and product service 
+
+8080 is the api gateway port number
+8081 is the products port number
+
+- if we want to access the end point directly - http://localhost:8081/api/products/msg
+
+- if we want to access the end point using api gateway - http://localhost:8080/api/products/msg
+
+
+- in api gateway we should configure
+
+spring.cloud.gateway.routes[0].id = userservice
+
+spring.cloud.gateway.routes[0].uri = lb://USERSERVICE
+
+spring.cloud.gateway.routes[0].predicates[0] =  Path=/api/users/**
+
+
+spring.cloud.gateway.routes[1].id = productservice
+
+spring.cloud.gateway.routes[1].uri = lb://PRODUCTSERVICE
+
+spring.cloud.gateway.routes[1].predicates[0] =  Path=/api/products/**
+
+DNS ERROR -> eureka.instance.prefer-ip-address = true
+
+
+_____________________________________
+
+Security
+
+Eureka server
+
+API Gateway => (route) Authentication Service => register => UserService
+
+API Gateway => (route) Authentication Service => login => UserService
+
+
+--> API Gateway - security config to permit auth/login auth/register, auth filter to validate the token, jwtUtil
+
+--> Authentication service - login register , security config
+
+  we should create a feign client for user service and we should call register method from authentication service
+
+--> user service - user table, security config finduserbyusername, creating password encoding and storing 
+
+--> product service
+
+_____________________________________
+
+LOAD BALANCER
+
+-> in api gateway we should add depencency for load balancer
+
+-> to create multiple instances we should run application on one port and then change the port number and then run the application on the changed port 
+
+-- go to run menu icon and then edit configurations select user service and then modify options and allow create multiple instances
+
+_____________________________________
+
+FEIGNCLIENT
+
+-> it is a declarative HTTP web client 
+
+-> if you want to use feign, create an interface and annotate it
+
+-> add the dependency for feign - openfeign
+
+-> in the main class we should add @EnableFeignClient annotation
+
+-> create an interface with @FeignClient(name="SERVICE_NAME") annotation 
+  - we should declare the method to be accessed from other service
+
+___________________________________
+
+APIGATE WAY
+
+
+--> we should use the gateway on a compatible version of spring boot
+
+--> we should add the dependencies for spring cloud, spring cloud gate way, web flux, eureka discovery client
+
+--> we should add @EnableEurekaClient annotation in main class
+
+--> then in application properties
+ - we should add id, uri, paths and other required configurations
+
+____________________________________
+
+CONFIG SERVER
+
+--> it is a client server architecture
+
+=> we can externalise all the local configurations in git
+
+=> all the repeated configuration can be used in config server 
+
+=> @EnableConfigServer
+--> cloud.config.server.git.uri= git hub repository link
+
+clone on start = true
+
+in other services we should do
+
+spring.config.import.optional.configserver:http:localhost:7989
+
+there can be default and other active files also
+
+____________________________________
+
+FAULT TOLERANCE
+---> circuit breaker and retry
+-> Circuit Breakers - we can handle fault tolerance . threshold of requests 
+
+---> Closed
+---> Open
+---> Half Open
+
+Resiliance4j hystrix libraries 
+
+reseliance, aop, actuator dependencies should be added
+
+ we should use @CircuteBReaker annotation and in properties file
+
+management.health.circutebreaker.enabled = true
+and management.endpoints.web.exposure.include = health
+management.endpoint.health.show-details: always
+
+resilience 4 j configurations
+
+resilience4j.circuitbreaker.instances:ratingHotelBreaker:registerHealthIndicator: ture
+eventConsumerBuffersize:10
+failuerRateThreshold: 50
+minimumNumberOfCalls:5
+automaticTransitionFromOpenToHalfOpenEnabled: true
+waitDurationInOpenState:6s
+permittedNoOfCallsInHalfOpenedState: 3
+slidingWindowSize: 10
+slidingWindowType: COUNT_BASED
+
+
+using actuator/health we can check the status -> we can check the failed calls and the status of the services
+
+we can check reseliance circuit breaker by cutting down any one of the service that is dependent on the current service
+
+--> resliance4j retry module
+
+@Retry(name,fallback)
+
+configuration
+retry:instance: 
+ratingHotelService:
+max-attempts:3
+wait-duration:5s
+
+
+==> RATE LIMITER
+
+this functionality allows limiting access to some services
+
+Rate limiter makes services highly available by limiting the no of calls we could process in specific window
+
+for security and performance
+
+@RateLimiter(name,fallback)
+
+ratelimiter.instance.userRateLimiter
+limit-refresh-period: 4s
+limit-for-period: 2
+timeout-duration: 8
+ to test we should download Jmeter
+
+
+
+
+_____________________________________
+
+Feign client Interceptor
+
+implements RequestInterceptor
+
+it will have a method called apply
+
+when the client try to access the resources with token this request is sent to the respective service (service 1) if service 1 is calling the other service methods internally then this token is not sent to service 2. in order to send this token to the other service we will use this interceptors to extract the token from one service to other service
+
+
+___________________________________
+
+API GATEWAY
+-> it will have security 
+config, 
+auth filter, - validate the token
+jwt util
+
+
+--> every service will have their respective security configs
+
+
+AUTHENTICATION SERVICE
+
+--> in authentication service will have login and register endpoints  , in security config we should permit these endpoints 
+
+
+USER SERVICE
+
+security config
+
+
+in jwt authentication filter we int not mandatory to call loaduserByUsername method we can just validate the token 
+
+____________________________________
+
+-> LOAD BALANCER
+
+-- if multiple instances are running for a particular service on different ports load balancer will uniformly distribute the in coming requests among the multiple instances
+
+-- go to run menu -> edit configurations -> add a new run configuration / -> select the service for which u want to create multiple instances -> and then click modify options -> and then select allow multiple instances
+
+-- then start the user service on one port and then change the port the number and re run the application then another instance will be started on another port number
+
+-- can be added in api gate way
+
+_____________________________________
+
+API GATEWAY is reactive architecture
+
+-- by default it is reactive , here we should not add spring cloud stater web , we should add spring cloud starter webflux
+
+-- it reciver all the requests from client 
+
+-- uses non blocking io
+
+-- handles many concurrent requests
+
+-- high request throughput
+
+-- gateway level filtering - jwt loging routing
+
+-- jwt filter gateway works as  global filter / gateway filter --> these are reactive filters requiring mono flux reactive request processing
+
+--** when we create global filter we dont want to add or register with security config , it will automatically gets done ,  and we also extend order and we will return -1 , which says this global filter should run before all the filters
+
+_____________________________________
+
+INTERCEPTORS
+
+clinet -> service 1 -> service 2
+
+by default the header and other things sent by the client will not be sent to the service 2 
+
+from service 1 if i am accessing the any end point in the service 2 ,
+it service 2 is using any security then we should use interceptors
+
+--> we have to create the interceptors, when ever the request is made if the inteceptors are present they will automatically intercept the request 
+
+we need to create the interceptor and get the request and add the headers and send them to the other service 
+
+once end points are secured, when the request is sent through the feign client (internal call) what ever the header info is sent by the  client is not forwarded by default to the feign client request
+
+___________________________________
+
+FAULT TOLERANCE
+
+resilaiance4j -> circuit breaker , retry 
+
+CIRCUID BREAKER
+
+circuit breaker exist in 3 states
+- CLOSED 
+- OPEN
+- HALF OPEN
+
+--> intitally service will be in closed state only
+
+we will be defining the thresholds limits , once the threshold limit crosses the limit then it will move to the open state 
+
+=> management.health.circuitbreaker.enabled= true
+
+=> management.endpoints.web.exposure.include=health
+
+=> resilience4j.circuitbreaker.instance.productserivce.registerHealthIndicator = true
+
+=> resilience4j.circuitbreaker.instance.productserivce.slidingWindowSize=3
+
+=> resilience4j.circuitbreaker.instance.productserivce.minimumNumberOfCalls=3
+
+=> resilience4j.circuitbreaker.instance.productserivce.failuerRateThreshold=50
+
+=> resilience4j.circuitbreaker.instance.productserivce.waitDurationOpenState=10s
+
+=> resilience4j.circuitbreaker.instance.productserivce.permittedNumberOfCallsInHalfOpenState= 2
+
+=> resilience4j.circuitbreaker.instance.productserivce.automaticTransitionFromOpenToHalfOpenEnabled=true
+
+
+========
+
+slidingWindowSize=5 -> last 5 calls tracked
+
+minimumNumberOfCalls=3 -> start checking after 3 calls
+
+failuerRateThreshold=50 -> if 50% fail => circuit open
+
+waitDurationInOpenState=10s -> wait 10s before retry
+
+permittedNumberOfCallsInHalfOpenState=2 -> Allow 2 test calls
+
+automaticTransitionFromOpenToHalfOpenEnabled=true
+
+for transient failuers we can use retry 
+
+for system or service failuers we can use circuit breaker
+
+circuit breaker states
+
+CLOSED - normal
+calls allowed
+if failuers exceeds threshold -> move to OPEN
+
+OPEN -  service down
+calls blocked
+fallback method executed
+after wait time -> move to HALF OPEN 
+
+HALF OPEN - testing
+limited calls allowed
+if success -> CLOSED
+if failure -> OPEN
+
+==>>>> from which ever service you are calling other service we should implement circuit breaker in that respective calling service
+
+to know the state
+
+logging.level.io.github.resilience4j.circuitbreaker=DEBUG
+
+logging.level.io.github.resilience4j.retry=DEBUG
+
+logging.level.org.springframework.cloud.circuitbreaker=DEBUG
+
+important for circuit breaker monitoring  
+   |
+  \ /
+
+management.endpoints.web.exposuer.inlude=*
+____________________________________
+
+
+

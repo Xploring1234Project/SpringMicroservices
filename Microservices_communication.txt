@@ -1,0 +1,62 @@
+A Feign Client (specifically Spring Cloud OpenFeign) is used in Spring Boot microservices to call another microservice easily without writing boilerplate REST code.
+Instead of using RestTemplate or WebClient, Feign lets you call another service just by creating an interface.
+Why Use Feign Client?
+--------------------------
+Without Feign:
+Need to write RestTemplate code
+Handle URLs manually
+Write more boilerplate
+With Feign:
+--------------
+Just define an interface
+Spring automatically handles REST calls
+Works well with Netflix Eureka for service discovery
+
+Advantages of Feign Client
+---------------------------------
+Less boilerplate code
+Easy service-to-service communication
+Works with Eureka
+Supports load balancing
+Supports fallback (Resilience)
+
+Creates a runtime proxy for this interface
+Intercepts method calls
+Builds HTTP requests
+Executes them using an HTTP client
+Converts responses back to Java objects
+
+@EnableFeignClients
+Triggers FeignClientsRegistrar
+Scans the classpath for @FeignClient-
+Registers each Feign client as a Spring Bean
+
+For every @FeignClient interface, Spring creates:
+
+A FactoryBean (FeignClientFactoryBean)
+Responsible for building the actual Feign client proxy
+
+Proxy creation - Feign uses JDK Dynamic Proxies.
+
+
+UserClient (interface) ->Feign InvocationHandler ->HTTP Request
+
+@Autowired
+private UserClient userClient;
+injecting a proxy object, not a real class implementation.
+
+WebClient
+------------
+WebClient is a modern HTTP client used to call other microservices.
+It is part of Spring WebFlux and supports asynchronous (non-blocking) communication.
+It is the replacement for RestTemplate, which is now considered legacy.
+
+
+
+
+                   RestTemplate          Feign Client            WebClient
+Type                 Synchronous         Synchronous      Asynchronous
+Blocking            Yes                      Yes                      No
+Performance      Medium               Medium              High
+Recommended  Deprecated        Common             Modern
+Complexity        Medium            Easy                    Medium

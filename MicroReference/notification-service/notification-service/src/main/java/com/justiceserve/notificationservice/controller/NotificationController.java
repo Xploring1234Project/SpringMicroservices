@@ -1,0 +1,34 @@
+package com.justiceserve.notificationservice.controller;
+import com.justiceserve.notificationservice.dto.*;
+import com.justiceserve.notificationservice.service.NotificationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+/**
+ * NotificationController — Member M1
+ * POST   /api/notifications          — send (called by other services via Feign)
+ * GET    /api/notifications/user/{id} — user inbox
+ * PATCH  /api/notifications/{id}/read
+ * PATCH  /api/notifications/user/{id}/read-all
+ * GET    /api/notifications/user/{id}/unread-count
+ */
+@RestController @RequestMapping("/api/notifications") @RequiredArgsConstructor
+@Tag(name = "Notifications")
+public class NotificationController {
+    private final NotificationService service;
+        /** Internal endpoint — called by other microservices via Feign (no auth required). */
+    @PostMapping("/internal")
+    public ResponseEntity<NotificationResponse> sendInternal(@RequestBody NotificationRequest req) {
+        return ResponseEntity.ok(service.send(req));
+    }
+
+        @PostMapping public ResponseEntity<NotificationResponse> send(@Valid @RequestBody NotificationRequest req) { return ResponseEntity.ok(service.send(req)); }
+    @GetMapping("/user/{userId}") public ResponseEntity<List<NotificationResponse>> getByUser(@PathVariable Long userId) { return ResponseEntity.ok(service.getByUser(userId)); }
+    @PatchMapping("/{id}/read") public ResponseEntity<NotificationResponse> markRead(@PathVariable Long id) { return ResponseEntity.ok(service.markRead(id)); }
+    @PatchMapping("/user/{userId}/read-all") public ResponseEntity<Void> markAllRead(@PathVariable Long userId) { service.markAllRead(userId); return ResponseEntity.ok().build(); }
+    @GetMapping("/user/{userId}/unread-count") public ResponseEntity<Long> countUnread(@PathVariable Long userId) { return ResponseEntity.ok(service.countUnread(userId)); }
+}
